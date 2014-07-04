@@ -1,5 +1,7 @@
 package com.robertkallgren.kgnchat;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -15,6 +17,8 @@ public class ConnectActivity extends Activity {
     private EditText nickEditText;
     private EditText addressEditText;
     private EditText portEditText;
+    private View loginFormView;
+    private View progressView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,6 +28,8 @@ public class ConnectActivity extends Activity {
         nickEditText = (EditText) findViewById(R.id.nick);
         addressEditText = (EditText) findViewById(R.id.address);
         portEditText = (EditText) findViewById(R.id.port);
+        loginFormView = findViewById(R.id.login_form);
+        progressView = findViewById(R.id.login_progress);
     }
 
 
@@ -90,8 +96,31 @@ public class ConnectActivity extends Activity {
         if (cancel) {
             focusView.requestFocus();
         } else {
+            showProgress(true);
             // TODO: Connect to server.
         }
+    }
+
+    private void showProgress(final boolean show) {
+        int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+
+        loginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+        loginFormView.animate().setDuration(shortAnimTime).alpha(
+                show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                loginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+            }
+        });
+
+        progressView.setVisibility(show ? View.VISIBLE : View.GONE);
+        progressView.animate().setDuration(shortAnimTime).alpha(
+                show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                progressView.setVisibility(show ? View.VISIBLE : View.GONE);
+            }
+        });
     }
 
 }
