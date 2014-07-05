@@ -3,15 +3,31 @@ package com.robertkallgren.kgnchat;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
+
 
 public class ConnectActivity extends Activity {
+
+    // Used for logging.
+    public static final String TAG = "CONNECTACTIVITY";
+
+    // Keep track of the connect task to ensure we can cancel it if requested.
+    private ConnectTask connectTask = null;
 
     // UI References.
     private EditText nickEditText;
@@ -97,7 +113,8 @@ public class ConnectActivity extends Activity {
             focusView.requestFocus();
         } else {
             showProgress(true);
-            // TODO: Connect to server.
+            connectTask = new ConnectTask(nick, address, port);
+            connectTask.execute((Void) null);
         }
     }
 
@@ -121,6 +138,87 @@ public class ConnectActivity extends Activity {
                 progressView.setVisibility(show ? View.VISIBLE : View.GONE);
             }
         });
+    }
+
+    /**
+     * Represents an asynchronous task used to connect to the server.
+     */
+    public class ConnectTask extends AsyncTask<Void, Void, Integer> {
+        // Error codes.
+        private static final int NETWORK_ERROR = 1;
+        private static final int NICK_IN_USE = 2;
+
+        private final String nick;
+        private final String address;
+        private final int port;
+
+        ConnectTask(String nick, String address, int port) {
+            this.nick = nick;
+            this.address = address;
+            this.port = port;
+        }
+
+        @Override
+        protected Integer doInBackground(Void... params) {
+            Log.d(TAG, "Attempting to setup a connection to server");
+            try {
+                InetAddress inetAddress = InetAddress.getByName(address);
+
+                Log.d(TAG, "Creating socket to " + inetAddress.getHostAddress() + ":" + port);
+                Socket connection = new Socket(inetAddress, port);
+                DataOutputStream out = new DataOutputStream(connection.getOutputStream());
+                BufferedReader in = new BufferedReader(
+                        new InputStreamReader(connection.getInputStream()));
+
+                Log.d(TAG, "Sending connection request");
+                out.writeBytes("CONNECT:" + nick + ":KGN Chat Android Client\n");
+                String response = in.readLine();
+                Log.d(TAG, "Received response: " + response);
+
+                if (response.equals("ERROR:Nick in use")) {
+                    connection.close();
+                    return NICK_IN_USE;
+                }
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+                return NETWORK_ERROR;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return NETWORK_ERROR;
+            }
+
+            return 0;
+        }
+
+        @Override
+        protected void onPostExecute(final Integer result) {
+            connectTask = null;
+            showProgress(false);
+
+            switch (result) {
+                case NETWORK_ERROR:
+                    addressEditText.setError(getString(R.string.error_connection_failed));
+                    addressEditText.requestFocus();
+                    Log.d(TAG, "Connection failed, displaying 'network error' message");
+                    break;
+                case NICK_IN_USE:
+                    nickEditText.setError(getString(R.string.error_nick_in_use));
+                    nickEditText.requestFocus();
+                    Log.d(TAG, "Connection failed, displaying 'nick in use' message");
+                    break;
+                default:
+                    Log.d(TAG, "Connection succeeded, launching chat activity");
+                    // TODO: Launch chat activity.
+                    // finish();
+            }
+        }
+
+        @Override
+        protected void onCancelled() {
+            connectTask = null;
+            showProgress(false);
+            Log.d(TAG, "Connection cancelled");
+        }
     }
 
 }

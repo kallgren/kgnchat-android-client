@@ -14,6 +14,7 @@
     <string name="error_invalid_nick">Invalid nick</string>
     <string name="error_invalid_address">Invalid address</string>
     <string name="error_invalid_port">Invalid port</string>
-    <string name="error_nick_in_use">Nick already in use</string>
+    <string name="error_nick_in_use">Nick is already in use by someone else</string>
+    <string name="error_connection_failed">Connection failed</string>
 
 </resources>
