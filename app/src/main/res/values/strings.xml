@@ -16,5 +16,9 @@
     <string name="error_invalid_port">Invalid port</string>
     <string name="error_nick_in_use">Nick is already in use by someone else</string>
     <string name="error_connection_failed">Connection failed</string>
+    <string name="error_connection_failed_tip">Please verify your information and try again</string>
+    <string name="ok">OK</string>
+    <string name="retry">Retry</string>
+    <string name="close">Close</string>
 
 </resources>

@@ -70,6 +70,7 @@
                 android:inputType="number"
                 android:maxLines="1"
                 android:singleLine="true"
+                android:hint="@string/hint_example_port"
                 android:text="@string/hint_example_port" />
 
             <Button
